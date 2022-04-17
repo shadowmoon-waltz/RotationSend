@@ -1,0 +1,75 @@
+plugins {
+  id "com.android.application"
+  id "kotlin-android"
+}
+
+boolean signConfigExists = project.hasProperty("keystoreFile") &&
+                           project.hasProperty("keystorePassword") &&
+                           project.hasProperty("keystoreAlias") &&
+                           project.hasProperty("keystoreAliasPassword")
+boolean signConfigExists2 = !signConfigExists &&
+                           System.getenv("TEMP_KEYSTORE_FILE") != null &&
+                           file(System.getenv("TEMP_KEYSTORE_FILE")).canRead()
+
+android {
+  signingConfigs {
+    if (signConfigExists) {
+      release {
+        storeFile file(project.property("keystoreFile"))
+        storePassword project.property("keystorePassword")
+        keyAlias project.property("keystoreAlias")
+        keyPassword project.property("keystoreAliasPassword")
+      }
+    } else if (signConfigExists2) {
+      release {
+        storeFile file(System.getenv("TEMP_KEYSTORE_FILE"))
+        storePassword System.getenv("TEMP_KEYSTORE_PASSWORD")
+        keyAlias System.getenv("TEMP_KEYSTORE_ALIAS")
+        keyPassword System.getenv("TEMP_KEYSTORE_ALIAS_PASSWORD")
+      }
+    }
+  }
+
+  compileSdkVersion 31
+
+  defaultConfig {
+    applicationId "com.sw.rotationsend"
+    minSdkVersion 14 // 14 for swipe layout and style theme device default
+    targetSdkVersion 31
+    versionCode 1
+    versionName "0.1"
+  }
+  
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+  
+  buildTypes {
+    release {
+      applicationVariants.all { variant ->
+        variant.outputs.all {
+          outputFileName = "RotationSend-${variant.versionName}.apk"
+        }
+      }
+      postprocessing {
+        removeUnusedCode true
+        removeUnusedResources true
+        obfuscate false
+        optimizeCode true
+      }
+      if (signConfigExists || signConfigExists2) {
+        signingConfig signingConfigs.release
+      }
+    }
+  }
+
+  buildFeatures {
+    viewBinding true
+  }
+}
+
+dependencies {
+  //implementation "androidx.core:core-ktx:1.7.0"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}

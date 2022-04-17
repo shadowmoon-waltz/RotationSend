@@ -1,0 +1,59 @@
+name: Android Build (release build, creates a release)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_name:
+        required: true
+
+jobs:
+  build:
+    env:
+      KEYSTORE_BASE64: ${{secrets.KEYSTORE_BASE64}}
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: set up JDK 11
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Validate Gradle Wrapper
+      uses: gradle/wrapper-validation-action@v1
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # https://proandroiddev.com/how-to-securely-build-and-sign-your-android-app-with-github-actions-ad5323452ce
+    # https://github.community/t/how-can-i-test-if-secrets-are-available-in-an-action/17911/5
+    # haven't had this issue, but keep in mind: https://github.community/t/runner-temp-being-emptied-between-jobs/18217
+    - name: Write Signing Info to Temporary File
+      run: echo -n "${KEYSTORE_BASE64}" | base64 -d > "${{runner.temp}}/temp_abr.jks"
+      if: ${{env.KEYSTORE_BASE64}} != ""
+
+    # https://github.com/webiny/action-post-run
+    - name: Setup Signing Info File Cleanup
+      uses: webiny/action-post-run@ff38cac46a6928a4815b99b4482b465eb6adccbd
+      with:
+        run: rm "${{runner.temp}}/temp_abr.jks"
+
+    - name: Gradle assembleRelease
+      uses: gradle/gradle-build-action@v2
+      with:
+        arguments: assembleRelease
+      env:
+        TEMP_KEYSTORE_FILE: "${{runner.temp}}/temp_abr.jks"
+        TEMP_KEYSTORE_PASSWORD: ${{secrets.KEYSTORE_PASSWORD}}
+        TEMP_KEYSTORE_ALIAS: ${{secrets.KEYSTORE_ALIAS}}
+        TEMP_KEYSTORE_ALIAS_PASSWORD: ${{secrets.KEYSTORE_ALIAS_PASSWORD}}
+
+    # https://stackoverflow.com/questions/69164423/glob-markdown-files-on-github-action-only-returns-docs-folder
+    # https://unix.stackexchange.com/questions/81349/how-do-i-use-find-when-the-filename-contains-spaces
+    - name: Create release
+      run: find "app/build/outputs/apk/release/" -name "*.apk" -print0 | xargs -0 gh release create "$RELEASE_NAME"
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        RELEASE_NAME: "${{github.event.inputs.release_name}}"

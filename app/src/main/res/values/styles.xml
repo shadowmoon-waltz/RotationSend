@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- https://codinginflow.com/tutorials/android/remove-the-actionbar -->
+  <!-- https://stackoverflow.com/questions/49190381/fullscreen-app-with-displaycutout -->
+  <!-- if you'd like to use default device theme, use <style name="NoActionBar" parent="@android:style/Theme.DeviceDefault"> instead of style... -->
+  <!-- if you'd like it to be dark mode aware as well, make a copy of this file in values-v29 directory and use -->
+  <!-- <style name="NoActionBar" parent="@android:style/Theme.DeviceDefault.DayNight"> instead of style... -->
+  <style name="NoActionBar">
+    <item name="android:windowActionBar">false</item>
+    <item name="android:windowNoTitle">true</item>
+    <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    <item name="android:windowTranslucentStatus">true</item>
+    <item name="android:windowTranslucentNavigation">true</item>
+  </style>
+</resources>
