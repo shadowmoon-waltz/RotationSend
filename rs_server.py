@@ -14,22 +14,23 @@ HOST = "127.0.0.1"
 PORT = 14111
 
 import socket
-import os
 import struct
+import sys
 
-# https://bugs.python.org/issue41437
-# https://github.com/codypiersall/pynng/issues/49
-# https://stackoverflow.com/questions/905189/why-does-sys-exit-not-exit-when-called-inside-a-thread-in-python
-import ctypes
+if sys.platform == "win32":
+  # https://bugs.python.org/issue41437
+  # https://github.com/codypiersall/pynng/issues/49
+  # https://stackoverflow.com/questions/905189/why-does-sys-exit-not-exit-when-called-inside-a-thread-in-python
+  import os
+  import ctypes
 
-# for *nix, you may need a signal handler and a call to os.kill(os.getpid(), signal.SIGINT)
-kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-@ctypes.WINFUNCTYPE(ctypes.c_uint, ctypes.c_uint)
-def ctrl_handler(ctrl_event):
-    if ctrl_event == 0: # control c event
-        os._exit(1)
-    return False
-kernel32.SetConsoleCtrlHandler(ctrl_handler, True)
+  kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+  @ctypes.WINFUNCTYPE(ctypes.c_uint, ctypes.c_uint)
+  def ctrl_handler(ctrl_event):
+      if ctrl_event == 0: # control c event
+          os._exit(1)
+      return False
+  kernel32.SetConsoleCtrlHandler(ctrl_handler, True)
 
 sock=socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((HOST, PORT))
